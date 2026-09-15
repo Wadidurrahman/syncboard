@@ -6,6 +6,7 @@ import {
   flexRender,
   getCoreRowModel,
   useReactTable,
+  ColumnDef,
 } from '@tanstack/react-table'
 
 const columnHelper = createColumnHelper<Ticket>()

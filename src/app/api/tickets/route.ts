@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase } from './../../lib/supabase'
 
 // 1. Menangani Preflight CORS (Penting untuk akses lintas domain)
 export async function OPTIONS() {

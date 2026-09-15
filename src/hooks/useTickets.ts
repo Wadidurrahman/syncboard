@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase } from './../app/lib/supabase'
 import { Ticket } from '@/types/database'
 
 export function useTickets() {
@@ -26,17 +26,31 @@ export function useTickets() {
   }
 
   useEffect(() => {
-    fetchTickets()
+    let isMounted = true
 
-    const channel = supabase
-      .channel('realtime tickets')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => {
-        fetchTickets() 
-      })
-      .subscribe()
+    const initializeTickets = async () => {
+      await fetchTickets()
+      if (!isMounted) return
+
+      const channel = supabase
+        .channel('realtime tickets')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => {
+          if (isMounted) fetchTickets() 
+        })
+        .subscribe()
+
+      return channel
+    }
+
+    let channel: any
+
+    initializeTickets().then((ch) => {
+      channel = ch
+    })
 
     return () => {
-      supabase.removeChannel(channel)
+      isMounted = false
+      if (channel) supabase.removeChannel(channel)
     }
   }, [])
 
