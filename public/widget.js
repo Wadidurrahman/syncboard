@@ -11,24 +11,37 @@
     return 'Sistem BPS';
   }
 
-  // 1. TOOLTIP PANDUAN SEBELUM KLIK IKON ?
-  const tooltipEl = document.createElement('div');
-  tooltipEl.id = 'sb-tooltip';
-  tooltipEl.innerText = 'Silahkan buat laporan jika ada bug atau update fitur baru';
-  Object.assign(tooltipEl.style, {
-    position: 'fixed', bottom: '28px', right: '78px', backgroundColor: '#1e293b',
-    color: '#ffffff', padding: '6px 12px', borderRadius: '6px', fontSize: '11px',
-    fontWeight: '600', zIndex: '999998', boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-    whiteSpace: 'nowrap', pointerEvents: 'none', transition: 'opacity 0.3s ease', opacity: '1'
-  });
+  const bubbleStyle = document.createElement('style');
+  bubbleStyle.innerHTML = `
+    @keyframes sbBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+    .sb-cloud-bubble {
+      position: fixed; bottom: 28px; right: 78px; background: #ffffff;
+      color: #1e293b; padding: 10px 14px; border-radius: 12px; font-size: 11px;
+      font-weight: 700; z-index: 999998; box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      border: 1px solid #cbd5e1; white-space: nowrap; pointer-events: none;
+      animation: sbBounce 3s ease-in-out infinite; font-family: system-ui, sans-serif;
+      transition: opacity 0.5s ease;
+    }
+    .sb-cloud-bubble::after {
+      content: ''; position: absolute; right: -6px; top: 12px; width: 0; height: 0;
+      border-top: 6px solid transparent; border-bottom: 6px solid transparent;
+      border-left: 6px solid #ffffff; filter: drop-shadow(1px 0 0 #cbd5e1);
+    }
+  `;
+  document.head.appendChild(bubbleStyle);
 
-  // Tooltip otomatis hilang setelah 6 detik agar tidak mengganggu
+  const tooltipEl = document.createElement('div');
+  tooltipEl.className = 'sb-cloud-bubble';
+  tooltipEl.innerText = 'Silahkan buat laporan jika ada bug atau update fitur baru';
+
   setTimeout(() => {
     tooltipEl.style.opacity = '0';
-    setTimeout(() => tooltipEl.remove(), 300);
-  }, 6000);
+    setTimeout(() => tooltipEl.remove(), 500);
+  }, 7000);
 
-  // Tombol Trigger Kanan Bawah (?)
   const toggleBtn = document.createElement('button');
   toggleBtn.id = 'sb-toggle';
   toggleBtn.innerHTML = '?';
@@ -39,12 +52,8 @@
     boxShadow: '0 4px 12px rgba(37,99,235,0.3)', zIndex: '999999', transition: 'all 0.2s ease'
   });
 
-  // Tampilkan tooltip saat kursor mendekati tombol ?
-  toggleBtn.onmouseenter = () => {
-    tooltipEl.style.opacity = '1';
-  };
+  toggleBtn.onmouseenter = () => { tooltipEl.style.opacity = '1'; };
 
-  // Kontainer Modal Utama
   const modalContainer = document.createElement('div');
   Object.assign(modalContainer.style, {
     position: 'fixed', bottom: '80px', right: '20px', width: '360px',
@@ -77,9 +86,9 @@
         <div>
           <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px;">Prioritas</label>
           <select id="sb-priority" style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; background: white; outline: none; box-sizing: border-box;">
-            <option value="low">Low (Rendah)</option>
-            <option value="standard" selected>Standard (Biasa)</option>
-            <option value="urgent">Urgent (Darurat)</option>
+            <option value="low">Low</option>
+            <option value="standard" selected>Standard</option>
+            <option value="urgent">Urgent</option>
           </select>
         </div>
 
@@ -144,7 +153,6 @@
   tabStatus.onclick = () => switchTab(false);
   closeBtn.onclick = () => { modalContainer.style.display = 'none'; };
 
-  // PRE-FETCH DATA DI LATAR BELAKANG SEGERA SETELAH SCRIPT DIMUAT (MENGHILANGKAN LOADING LAMA)
   let cachedLive = null;
   let cachedHistory = null;
 
@@ -165,7 +173,6 @@
     if (modalContainer.style.display === 'none') {
       modalContainer.style.display = 'flex';
       renderDashboardData(cachedLive, cachedHistory);
-      // Refresh data terbaru secara senyap
       backgroundPreFetch().then(() => {
         if (modalContainer.style.display === 'flex') {
           renderDashboardData(cachedLive, cachedHistory);
