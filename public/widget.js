@@ -52,6 +52,7 @@
     setTimeout(() => tooltipEl.remove(), 500);
   }, 7000);
 
+  // 2. TOMBOL TRIGGER KANAN BAWAH (?)
   const toggleBtn = document.createElement('button');
   toggleBtn.id = 'sb-toggle';
   toggleBtn.innerHTML = '?';
@@ -64,6 +65,7 @@
 
   toggleBtn.onmouseenter = () => { tooltipEl.style.opacity = '1'; };
 
+  // 3. KONTAINER MODAL UTAMA
   const modalContainer = document.createElement('div');
   Object.assign(modalContainer.style, {
     position: 'fixed', bottom: '80px', right: '20px', width: '350px',
@@ -141,6 +143,50 @@
   document.body.appendChild(toggleBtn);
   document.body.appendChild(modalContainer);
 
+  // 4. FITUR ONBOARDING (HANYA MUNCUL 1x PER KLIENT)
+  if (!localStorage.getItem('sb_onboarding_done')) {
+    const overlay = document.createElement('div');
+    Object.assign(overlay.style, {
+      position: 'fixed', inset: '0', backgroundColor: 'rgba(15, 23, 42, 0.75)',
+      zIndex: '999997', display: 'flex', flexDirection: 'column',
+      alignItems: 'flex-end', justifyContent: 'flex-end',
+      padding: '0 30px 100px 0', backdropFilter: 'blur(3px)',
+      transition: 'opacity 0.4s ease'
+    });
+
+    overlay.innerHTML = `
+      <div style="background: white; padding: 20px; border-radius: 12px; width: 260px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); position: relative; font-family: system-ui, sans-serif; animation: sbFadeSlide 0.5s ease forwards;">
+        <div style="font-size: 24px; margin-bottom: 8px;">🚀</div>
+        <h3 style="margin: 0 0 8px 0; color: #1e293b; font-size: 15px; font-weight: 800;">Fitur Laporan Baru!</h3>
+        <p style="margin: 0 0 16px 0; color: #475569; font-size: 12px; line-height: 1.5;">
+          Halo! Saat ini kamu bisa melaporkan hal yang ingin diperbaiki (bug) atau request update fitur langsung dari sini.
+        </p>
+        <button id="sb-onboarding-ok" style="background: #2563eb; color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; font-size: 12px; transition: background 0.2s;">Saya Mengerti</button>
+        
+        <!-- Panah Melengkung Mengarah ke Tombol ? -->
+        <svg style="position: absolute; bottom: -50px; right: 10px; width: 45px; height: 45px; color: #ffffff; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+          <path d="M5 5c0 8 4 14 10 14m0 0l-4-4m4 4l-4 4"/>
+        </svg>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const closeOnboarding = () => {
+      overlay.style.opacity = '0';
+      setTimeout(() => overlay.remove(), 400);
+      localStorage.setItem('sb_onboarding_done', 'true');
+    };
+
+    document.getElementById('sb-onboarding-ok').onclick = closeOnboarding;
+    
+    // Jika tombol ? atau overlay luar diklik, onboarding juga hilang
+    toggleBtn.addEventListener('click', closeOnboarding, { once: true });
+    overlay.addEventListener('click', (e) => {
+      if(e.target === overlay) closeOnboarding();
+    });
+  }
+
+  // 5. LOGIKA TAB DAN MODAL
   const tabForm = document.getElementById('sb-tab-form');
   const tabStatus = document.getElementById('sb-tab-status');
   const contentForm = document.getElementById('sb-content-form');
