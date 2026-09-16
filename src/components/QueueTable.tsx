@@ -13,7 +13,7 @@ interface QueueTableProps {
   data: any[];
   loading: boolean;
   onUpdateStatus: (id: string, newStatus: string) => void;
-  onViewDetail: (ticket: any) => void;
+  onViewDetail?: (ticket: any) => void;
 }
 
 const getSystemName = (id: string) => {
@@ -78,11 +78,13 @@ export default function QueueTable({ data, loading, onUpdateStatus, onViewDetail
         const ticket = info.row.original
         return (
           <div className="flex gap-2 min-w-[200px] items-center">
-            <button 
-              onClick={() => onViewDetail(ticket)}
-              className="bg-white hover:bg-slate-50 text-slate-700 font-semibold px-3 py-1.5 rounded text-xs transition-colors border border-slate-300">
-              Detail
-            </button>
+            {onViewDetail && (
+              <button 
+                onClick={() => onViewDetail(ticket)}
+                className="bg-white hover:bg-slate-50 text-slate-700 font-semibold px-3 py-1.5 rounded text-xs transition-colors border border-slate-300">
+                Detail
+              </button>
+            )}
 
             <select 
               value={ticket.status}
