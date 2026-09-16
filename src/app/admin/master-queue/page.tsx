@@ -1,23 +1,18 @@
 'use client'
 
-import QueueTable from '@/components/QueueTable'
 import { useTickets } from '@/hooks/useTickets'
+import QueueTable from '@/components/QueueTable'
 
 export default function MasterQueuePage() {
-  const { tickets, loading, updateTicketStatus } = useTickets()
+  const { data, loading, updateStatus } = useTickets()
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">Master Queue</h1>
-        <p className="text-slate-500 text-sm mt-1">Kelola dan perbarui status laporan/kendala secara real-time.</p>
-      </div>
-
+    <main className="p-8">
       <QueueTable 
-        data={tickets} 
+        data={data} 
         loading={loading} 
-        onUpdateStatus={updateTicketStatus} 
+        onUpdateStatus={updateStatus} 
       />
-    </div>
+    </main>
   )
 }

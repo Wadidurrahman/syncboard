@@ -1,18 +1,16 @@
 'use client'
 
-import { Ticket } from '@/types/database'
 import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
   useReactTable,
-  ColumnDef,
 } from '@tanstack/react-table'
 
-const columnHelper = createColumnHelper<Ticket>()
+const columnHelper = createColumnHelper<any>()
 
 interface QueueTableProps {
-  data: Ticket[];
+  data: any[];
   loading: boolean;
   onUpdateStatus: (id: string, newStatus: string) => void;
 }
@@ -74,7 +72,7 @@ export default function QueueTable({ data, loading, onUpdateStatus }: QueueTable
   ]
 
   const table = useReactTable({
-    data,
+    data: data ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
   })
@@ -96,7 +94,7 @@ export default function QueueTable({ data, loading, onUpdateStatus }: QueueTable
           ))}
         </thead>
         <tbody className="divide-y divide-gray-100">
-          {table.getRowModel().rows.map(row => (
+          {table.getRowModel()?.rows?.map(row => (
             <tr key={row.id} className="hover:bg-gray-50 transition-colors">
               {row.getVisibleCells().map(cell => (
                 <td key={cell.id} className="p-4 text-sm">
@@ -105,7 +103,7 @@ export default function QueueTable({ data, loading, onUpdateStatus }: QueueTable
               ))}
             </tr>
           ))}
-          {data.length === 0 && (
+          {(!data || data.length === 0) && (
             <tr>
               <td colSpan={4} className="p-8 text-center text-gray-500">
                 Tidak ada antrian saat ini.

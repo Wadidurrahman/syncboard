@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabase } from './../../lib/supabase'
 
-// 1. Menangani Preflight CORS (Penting untuk akses lintas domain)
 export async function OPTIONS() {
   return NextResponse.json({}, {
     headers: {
@@ -12,7 +11,6 @@ export async function OPTIONS() {
   })
 }
 
-// 2. Menangani Request POST dari Widget
 export async function POST(request: Request) {
   try {
     const formData = await request.formData()
@@ -28,11 +26,10 @@ export async function POST(request: Request) {
     let screenshot_url = null
     let voice_url = null
 
-    // 3. Upload Screenshot jika ada
     if (screenshot && screenshot.size > 0) {
       const ext = screenshot.name.split('.').pop()
       const fileName = `screenshot-${Date.now()}.${ext}`
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from('attachments')
         .upload(fileName, screenshot)
         
@@ -41,11 +38,10 @@ export async function POST(request: Request) {
       }
     }
 
-    // 4. Upload Voice Note jika ada
     if (voice && voice.size > 0) {
       const ext = voice.name.split('.').pop()
       const fileName = `voice-${Date.now()}.${ext}`
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from('attachments')
         .upload(fileName, voice)
         
@@ -54,7 +50,6 @@ export async function POST(request: Request) {
       }
     }
 
-    // 5. Simpan Data ke Tabel Tickets
     const { data: ticket, error: dbError } = await supabase
       .from('tickets')
       .insert([
@@ -68,16 +63,20 @@ export async function POST(request: Request) {
           status: 'pending'
         }
       ])
+      .select()
 
     if (dbError) throw dbError
 
-    return NextResponse.json({ success: true, message: 'Laporan berhasil dikirim' }, {
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Laporan berhasil dikirim',
+      ticket_id: ticket[0].id
+    }, {
       status: 200,
       headers: { 'Access-Control-Allow-Origin': '*' }
     })
 
   } catch (error: any) {
-    console.error('API Error:', error)
     return NextResponse.json({ success: false, error: error.message }, {
       status: 500,
       headers: { 'Access-Control-Allow-Origin': '*' }

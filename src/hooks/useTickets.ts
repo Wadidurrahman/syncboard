@@ -1,56 +1,54 @@
 import { useState, useEffect } from 'react'
-import { supabase } from './../app/lib/supabase'
-import { Ticket } from '@/types/database'
+import { supabase } from '@/app/lib/supabase'
 
 export function useTickets() {
-  const [data, setData] = useState<Ticket[]>([])
+  const [data, setData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchTickets = async () => {
-    const { data: tickets, error } = await supabase
-      .from('tickets')
-      .select('*')
-      .order('created_at', { ascending: false })
+    try {
+      const { data: tickets, error } = await supabase
+        .from('tickets')
+        .select('*')
+        .order('created_at', { ascending: false })
 
-    if (!error) setData(tickets || [])
-    setLoading(false)
+      if (error) {
+        console.error(error)
+      } else {
+        setData(tickets || [])
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const updateStatus = async (id: string, newStatus: string) => {
-    const { error } = await supabase
-      .from('tickets')
-      .update({ status: newStatus })
-      .eq('id', id)
+    try {
+      const { error } = await supabase
+        .from('tickets')
+        .update({ status: newStatus })
+        .eq('id', id)
 
-    if (error) console.error('Gagal update status:', error)
+      if (error) console.error(error)
+    } catch (err) {
+      console.error(err)
+    }
   }
 
   useEffect(() => {
-    let isMounted = true
+    fetchTickets()
 
-    const initializeTickets = async () => {
-      await fetchTickets()
-      if (!isMounted) return
-
-      const channel = supabase
-        .channel('realtime tickets')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => {
-          if (isMounted) fetchTickets() 
-        })
-        .subscribe()
-
-      return channel
-    }
-
-    let channel: any
-
-    initializeTickets().then((ch) => {
-      channel = ch
-    })
+    const channel = supabase
+      .channel('realtime tickets')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => {
+        fetchTickets()
+      })
+      .subscribe()
 
     return () => {
-      isMounted = false
-      if (channel) supabase.removeChannel(channel)
+      supabase.removeChannel(channel)
     }
   }, [])
 
