@@ -2,8 +2,8 @@
   const scriptTag = document.currentScript;
   const systemId = scriptTag.getAttribute('data-system-id') || '';
   
-  const apiUrl = 'http://localhost:3000/api/tickets';
-  const statusUrl = 'http://localhost:3000/api/tickets/status';
+ const apiUrl = 'https://syncboard-topaz.vercel.app/api/tickets';
+const statusUrl = 'https://syncboard-topaz.vercel.app/api/tickets/status';
 
   const container = document.createElement('div');
   container.innerHTML = `
