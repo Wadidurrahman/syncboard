@@ -2,18 +2,15 @@
   const scriptTag = document.currentScript || document.querySelector('script[src*="widget.js"]');
   const systemId = scriptTag?.getAttribute('data-system-id') || 'unknown';
   
-  // URL UTAMA SYNCBOARD ANDA
   const baseUrl = 'https://syncboard-topaz.vercel.app';
   const apiUrl = `${baseUrl}/api/tickets`;
 
-  // KAMUS SISTEM (Agar Marquee bisa membaca nama sistem)
   function getSystemName(id) {
     if (id === '22dd4848-57d6-4ae4-8369-ab8f55315039') return 'INOVAZI BPS';
     if (id === 'a7eba848-0529-4bc2-8bf1-9112df1c13e5') return 'ANTREAN BPS';
     return 'Sistem Umum';
   }
 
-  // 1. BUAT ELEMEN TOMBOL TOGGLE
   const toggleBtn = document.createElement('button');
   toggleBtn.id = 'sb-toggle';
   toggleBtn.innerHTML = '?';
@@ -24,7 +21,6 @@
     boxShadow: '0 4px 12px rgba(37,99,235,0.4)', zIndex: '999999', transition: 'all 0.3s ease'
   });
 
-  // 2. BUAT KONTINER MODAL
   const modalContainer = document.createElement('div');
   Object.assign(modalContainer.style, {
     position: 'fixed', bottom: '80px', right: '20px', width: '340px',
@@ -33,53 +29,39 @@
     fontFamily: 'system-ui, -apple-system, sans-serif', border: '1px solid #e2e8f0'
   });
 
-  // 3. STRUKTUR HTML MODAL (Marquee + Tabs + Form + History)
   modalContainer.innerHTML = `
-    <!-- Marquee Info -->
     <div style="background-color: #1e293b; color: #f8fafc; padding: 6px 10px; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
       <span style="color: #60a5fa; flex-shrink: 0;">⚡ LIVE:</span>
       <marquee id="sb-marquee-text" scrollamount="4" style="flex-1;">Memuat aktivitas developer...</marquee>
     </div>
-
-    <!-- Header & Tabs -->
     <div style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex;">
       <button id="sb-tab-form" style="flex: 1; padding: 12px 0; border: none; background: white; color: #2563eb; font-weight: bold; font-size: 13px; border-bottom: 2px solid #2563eb; cursor: pointer;">Kirim Laporan</button>
       <button id="sb-tab-history" style="flex: 1; padding: 12px 0; border: none; background: transparent; color: #64748b; font-weight: bold; font-size: 13px; border-bottom: 2px solid transparent; cursor: pointer;">Riwayat (${getSystemName(systemId)})</button>
     </div>
-
-    <!-- Area Konten -->
     <div style="position: relative; height: 380px; overflow: hidden;">
-      
-      <!-- TAB 1: FORM -->
       <div id="sb-content-form" style="position: absolute; inset: 0; padding: 16px; overflow-y: auto; display: block;">
         <input type="text" id="sb-title" placeholder="Judul Kendala (Misal: Tombol cetak error)" style="width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 13px;">
         <textarea id="sb-desc" placeholder="Jelaskan detail kendala..." style="width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #cbd5e1; border-radius: 6px; height: 80px; resize: none; box-sizing: border-box; font-size: 13px;"></textarea>
-        
         <div style="display: flex; gap: 10px; margin-bottom: 15px;">
           <select id="sb-priority" style="flex: 1; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px;">
             <option value="standard">Standard</option>
             <option value="urgent">Urgent (Darurat)</option>
           </select>
         </div>
-
         <button id="sb-submit" style="width: 100%; padding: 12px; background-color: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;">Kirim Laporan</button>
         <p id="sb-status" style="font-size: 12px; text-align: center; margin-top: 10px; font-weight: bold; display: none;"></p>
       </div>
-
-      <!-- TAB 2: HISTORY -->
       <div id="sb-content-history" style="position: absolute; inset: 0; padding: 16px; overflow-y: auto; display: none; background: #f8fafc;">
         <div id="sb-history-list" style="display: flex; flex-direction: column; gap: 10px;">
           <p style="text-align: center; font-size: 12px; color: #94a3b8; margin-top: 20px;">Memuat riwayat...</p>
         </div>
       </div>
-
     </div>
   `;
 
   document.body.appendChild(toggleBtn);
   document.body.appendChild(modalContainer);
 
-  // LOGIKA TAB SWAP
   const tabForm = document.getElementById('sb-tab-form');
   const tabHistory = document.getElementById('sb-tab-history');
   const contentForm = document.getElementById('sb-content-form');
@@ -100,7 +82,6 @@
   tabForm.onclick = () => switchTab(true);
   tabHistory.onclick = () => switchTab(false);
 
-  // FUNGSI: Ambil Data Marquee (Realtime Pengerjaan Developer)
   async function fetchMarquee() {
     try {
       const res = await fetch(`${apiUrl}?marquee=true`);
@@ -113,10 +94,9 @@
       } else {
         marqueeEl.innerText = 'Semua sistem aman. Tidak ada perbaikan aktif.';
       }
-    } catch (e) { console.error(e); }
+    } catch (e) {}
   }
 
-  // FUNGSI: Ambil Data Riwayat Klien Ini
   async function fetchHistory() {
     try {
       const listEl = document.getElementById('sb-history-list');
@@ -150,16 +130,14 @@
           </div>
         `;
       }).join('');
-    } catch (e) { console.error(e); }
+    } catch (e) {}
   }
 
-  // LOGIKA BUKA/TUTUP MODAL (Auto Refresh saat dibuka!)
   toggleBtn.onclick = () => {
     if (modalContainer.style.display === 'none') {
       modalContainer.style.display = 'flex';
       toggleBtn.innerHTML = '×';
       toggleBtn.style.backgroundColor = '#ef4444';
-      // Minta data terbaru dari server saat dibuka! (Memperbaiki bug status pending)
       fetchMarquee();
       fetchHistory();
     } else {
@@ -169,7 +147,6 @@
     }
   };
 
-  // LOGIKA KIRIM LAPORAN
   document.getElementById('sb-submit').onclick = async () => {
     const title = document.getElementById('sb-title').value;
     const desc = document.getElementById('sb-desc').value;
@@ -201,13 +178,12 @@
         document.getElementById('sb-title').value = '';
         document.getElementById('sb-desc').value = '';
         
-        // Pindah ke tab riwayat otomatis setelah sukses
         setTimeout(() => {
           statusEl.style.display = 'none';
           btn.innerText = 'Kirim Laporan';
           btn.disabled = false;
           switchTab(false); 
-          fetchHistory(); // Refresh riwayat agar data baru muncul
+          fetchHistory();
         }, 1500);
       }
     } catch (error) {

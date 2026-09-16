@@ -1,18 +1,16 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseUrl = 'https://bdvfhwcmbqkmpgplsxst.supabase.co'
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJkdmZod2NtYnFrbXBncGxzeHN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNjQ2OTYsImV4cCI6MjEwNDk0MDY5Nn0.ahqlXEsu3rmmX4hoCR56VWIptAC0yIQwooRXFfG-lyQ'
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-// FUNGSI GET: Untuk mengambil Riwayat & Marquee di Widget
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const systemId = searchParams.get('system_id')
   const marquee = searchParams.get('marquee')
 
   try {
-    // 1. Jika Widget meminta data Marquee (Bug yang sedang dikerjakan)
     if (marquee === 'true') {
       const { data, error } = await supabase
         .from('tickets')
@@ -24,7 +22,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ data })
     }
 
-    // 2. Jika Widget meminta Riwayat berdasarkan Sistem Klien
     if (systemId) {
       const { data, error } = await supabase
         .from('tickets')
@@ -35,7 +32,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ data })
     }
 
-    // 3. Default Get All (Untuk Admin)
     const { data } = await supabase.from('tickets').select('*').order('created_at', { ascending: false })
     return NextResponse.json({ data })
   } catch (error: any) {
@@ -43,7 +39,6 @@ export async function GET(request: Request) {
   }
 }
 
-// FUNGSI POST: Untuk mengirim laporan baru dari Widget
 export async function POST(request: Request) {
   try {
     const body = await request.json()
