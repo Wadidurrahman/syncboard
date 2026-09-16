@@ -11,7 +11,7 @@
     return 'Sistem BPS';
   }
 
-  // Tombol Trigger (?)
+  // Tombol Trigger Kanan Bawah (?)
   const toggleBtn = document.createElement('button');
   toggleBtn.id = 'sb-toggle';
   toggleBtn.innerHTML = '?';
@@ -22,67 +22,79 @@
     boxShadow: '0 4px 12px rgba(37,99,235,0.3)', zIndex: '999999', transition: 'all 0.2s ease'
   });
 
-  // Kontainer Modal Utama
+  // Kontainer Modal dengan Tab (Laporan & Status/Riwayat Terstruktur)
   const modalContainer = document.createElement('div');
   Object.assign(modalContainer.style, {
-    position: 'fixed', bottom: '80px', right: '20px', width: '380px',
-    backgroundColor: 'white', borderRadius: '16px', boxShadow: '0 12px 32px rgba(0,0,0,0.15)',
+    position: 'fixed', bottom: '80px', right: '20px', width: '360px',
+    backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
     zIndex: '999999', display: 'none', flexDirection: 'column', overflow: 'hidden',
-    fontFamily: 'system-ui, -apple-system, sans-serif', border: '1px solid #e2e8f0'
+    fontFamily: 'system-ui, -apple-system, sans-serif', border: '1px solid #cbd5e1'
   });
 
   modalContainer.innerHTML = `
-    <!-- Marquee Bar -->
-    <div style="background-color: #0f172a; color: #f8fafc; padding: 8px 12px; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #1e293b;">
-      <span style="color: #60a5fa; flex-shrink: 0; font-weight: 800;">⚡ LIVE:</span>
-      <marquee id="sb-marquee-text" scrollamount="4" style="flex: 1;">Memuat aktivitas developer...</marquee>
-    </div>
-
-    <!-- Header Modal & Tabs -->
-    <div style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; padding: 0 16px;">
-      <div style="display: flex; gap: 4px; flex: 1;">
-        <button id="sb-tab-form" style="padding: 12px 16px; border: none; background: transparent; color: #2563eb; font-weight: 700; font-size: 13px; border-bottom: 2px solid #2563eb; cursor: pointer;">Layanan Developer</button>
-        <button id="sb-tab-history" style="padding: 12px 16px; border: none; background: transparent; color: #64748b; font-weight: 700; font-size: 13px; border-bottom: 2px solid transparent; cursor: pointer;">Riwayat</button>
+    <!-- Header & Tabs (Compact) -->
+    <div style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; padding: 0 12px;">
+      <div style="display: flex;">
+        <button id="sb-tab-form" style="padding: 12px 14px; border: none; background: transparent; color: #2563eb; font-weight: 700; font-size: 13px; border-bottom: 2px solid #2563eb; cursor: pointer;">Kirim Laporan</button>
+        <button id="sb-tab-status" style="padding: 12px 14px; border: none; background: transparent; color: #64748b; font-weight: 700; font-size: 13px; border-bottom: 2px solid transparent; cursor: pointer;">Status & Antrean</button>
       </div>
-      <button id="sb-close" style="background: none; border: none; font-size: 18px; color: #94a3b8; cursor: pointer; padding: 4px;">&times;</button>
+      <button id="sb-close" style="background: none; border: none; font-size: 18px; color: #64748b; cursor: pointer; padding: 0; line-height: 1;">&times;</button>
     </div>
 
-    <!-- Konten Area -->
+    <!-- Area Konten -->
     <div style="position: relative; height: 440px; overflow: hidden; background: #ffffff;">
       
-      <!-- TAB 1: FORM LAPORAN LENGKAP -->
-      <div id="sb-content-form" style="position: absolute; inset: 0; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px;">
+      <!-- TAB 1: FORM INPUT -->
+      <div id="sb-content-form" style="position: absolute; inset: 0; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
         <div>
-          <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 6px;">Judul Kendala/Fitur</label>
-          <input type="text" id="sb-title" placeholder="Contoh: Error saat cetak laporan" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; outline: none; box-sizing: border-box;">
+          <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px;">Judul Kendala/Fitur</label>
+          <input type="text" id="sb-title" placeholder="Contoh: Error saat cetak laporan" style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; outline: none; box-sizing: border-box;">
         </div>
 
         <div>
-          <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 6px;">Deskripsi Detail</label>
-          <textarea id="sb-desc" placeholder="Jelaskan detail kendala atau permintaan Anda di sini..." style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; height: 90px; resize: none; font-size: 13px; outline: none; box-sizing: border-box;"></textarea>
+          <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px;">Jelaskan detailnya di sini...</label>
+          <textarea id="sb-desc" placeholder="Jelaskan detailnya..." style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; height: 60px; resize: none; font-size: 12px; outline: none; box-sizing: border-box;"></textarea>
         </div>
 
         <div>
-          <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 6px;">Prioritas</label>
-          <select id="sb-priority" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; background: white; outline: none; box-sizing: border-box;">
+          <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px;">Prioritas</label>
+          <select id="sb-priority" style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; background: white; outline: none; box-sizing: border-box;">
             <option value="standard">Standard (Biasa)</option>
             <option value="urgent">Urgent (Darurat)</option>
           </select>
         </div>
 
         <div>
-          <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 6px;">Screenshot (Opsional)</label>
-          <input type="file" id="sb-file" accept="image/*" style="width: 100%; font-size: 11px; color: #64748b; padding: 6px; border: 1px dashed #cbd5e1; border-radius: 8px; background: #f8fafc; box-sizing: border-box;">
+          <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px;">Screenshot (Opsional)</label>
+          <input type="file" id="sb-file" accept="image/*" style="width: 100%; font-size: 11px; color: #64748b; padding: 5px; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc; box-sizing: border-box;">
         </div>
 
-        <button id="sb-submit" style="width: 100%; padding: 12px; background-color: #2563eb; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; transition: background 0.2s; margin-top: 4px;">Kirim Laporan</button>
-        <p id="sb-status" style="font-size: 12px; text-align: center; font-weight: 600; display: none; margin: 0;"></p>
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px;">Voice Note (Opsional)</label>
+          <button id="sb-record-btn" style="width: 100%; padding: 8px; background-color: #2563eb; color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span>🎙️</span> <span id="sb-record-text">Mulai Rekam Suara</span>
+          </button>
+          <audio id="sb-audio-preview" controls style="width: 100%; margin-top: 4px; display: none; height: 30px;"></audio>
+        </div>
+
+        <button id="sb-submit" style="width: 100%; padding: 10px; background-color: #2563eb; color: white; border: none; border-radius: 6px; font-weight: 700; font-size: 12px; cursor: pointer; margin-top: 2px;">Kirim Laporan</button>
+        <p id="sb-status" style="font-size: 11px; text-align: center; font-weight: 600; display: none; margin: 0;"></p>
       </div>
 
-      <!-- TAB 2: RIWAYAT -->
-      <div id="sb-content-history" style="position: absolute; inset: 0; padding: 16px; overflow-y: auto; display: none; background: #f8fafc;">
-        <div id="sb-history-list" style="display: flex; flex-direction: column; gap: 10px;">
-          <p style="text-align: center; font-size: 12px; color: #94a3b8; margin-top: 20px;">Memuat riwayat...</p>
+      <!-- TAB 2: STATUS & ANTREAN TERSTRUKTUR -->
+      <div id="sb-content-status" style="position: absolute; inset: 0; padding: 14px; overflow-y: auto; display: none; background: #f8fafc;">
+        
+        <!-- Live Developer Activity Box -->
+        <div style="background: #1e293b; color: white; padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; font-size: 11px;">
+          <div style="font-weight: 800; color: #60a5fa; margin-bottom: 2px; display: flex; align-items: center; gap: 4px;">
+            <span>⚡</span> LIVE DEVELOPER ACTIVITY
+          </div>
+          <div id="sb-live-activity" style="color: #cbd5e1; line-height: 1.3;">Memeriksa aktivitas...</div>
+        </div>
+
+        <div style="font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Antrean & Progress Sistem Ini</div>
+        <div id="sb-queue-list" style="display: flex; flex-direction: column; gap: 8px;">
+          <p style="text-align: center; font-size: 11px; color: #94a3b8; margin-top: 20px;">Memuat data...</p>
         </div>
       </div>
 
@@ -93,70 +105,88 @@
   document.body.appendChild(modalContainer);
 
   const tabForm = document.getElementById('sb-tab-form');
-  const tabHistory = document.getElementById('sb-tab-history');
+  const tabStatus = document.getElementById('sb-tab-status');
   const contentForm = document.getElementById('sb-content-form');
-  const contentHistory = document.getElementById('sb-content-history');
+  const contentStatus = document.getElementById('sb-content-status');
   const closeBtn = document.getElementById('sb-close');
 
   function switchTab(toForm) {
     if (toForm) {
       tabForm.style.color = '#2563eb'; tabForm.style.borderBottomColor = '#2563eb';
-      tabHistory.style.color = '#64748b'; tabHistory.style.borderBottomColor = 'transparent';
-      contentForm.style.display = 'flex'; contentHistory.style.display = 'none';
+      tabStatus.style.color = '#64748b'; tabStatus.style.borderBottomColor = 'transparent';
+      contentForm.style.display = 'flex'; contentStatus.style.display = 'none';
     } else {
-      tabHistory.style.color = '#2563eb'; tabHistory.style.borderBottomColor = '#2563eb';
+      tabStatus.style.color = '#2563eb'; tabStatus.style.borderBottomColor = '#2563eb';
       tabForm.style.color = '#64748b'; tabForm.style.borderBottomColor = 'transparent';
-      contentForm.style.display = 'none'; contentHistory.style.display = 'flex';
+      contentForm.style.display = 'none'; contentStatus.style.display = 'flex';
     }
   }
 
   tabForm.onclick = () => switchTab(true);
-  tabHistory.onclick = () => switchTab(false);
+  tabStatus.onclick = () => switchTab(false);
   closeBtn.onclick = () => { modalContainer.style.display = 'none'; };
 
-  async function fetchMarquee() {
-    try {
-      const res = await fetch(`${apiUrl}?marquee=true`);
-      const { data } = await res.json();
-      const marqueeEl = document.getElementById('sb-marquee-text');
-      
-      if (data && data.length > 0) {
-        const textArr = data.map(t => `Sedang memperbaiki [${t.title}] di [${getSystemName(t.system_id)}]`);
-        marqueeEl.innerText = textArr.join('  •  ');
-      } else {
-        marqueeEl.innerText = 'Semua sistem aman. Tidak ada perbaikan aktif.';
-      }
-    } catch (e) {}
-  }
+  toggleBtn.onclick = () => {
+    if (modalContainer.style.display === 'none') {
+      modalContainer.style.display = 'flex';
+      fetchDashboardData();
+    } else {
+      modalContainer.style.display = 'none';
+    }
+  };
 
-  async function fetchHistory() {
+  // FUNGSI: Mengambil data Live Activity & Posisi Antrean Klien
+  async function fetchDashboardData() {
     try {
-      const listEl = document.getElementById('sb-history-list');
-      listEl.innerHTML = '<p style="text-align: center; font-size: 12px; color: #94a3b8; margin-top: 20px;">Memuat riwayat...</p>';
+      // 1. Ambil data aktivitas live developer (yang sedang in_progress)
+      const resLive = await fetch(`${apiUrl}?marquee=true`);
+      const { data: liveData } = await resLive.json();
+      const liveBox = document.getElementById('sb-live-activity');
       
-      const res = await fetch(`${apiUrl}?system_id=${systemId}`);
-      const { data } = await res.json();
+      if (liveData && liveData.length > 0) {
+        const currentTask = liveData[0];
+        liveBox.innerHTML = `Sedang memperbaiki <b>"${currentTask.title}"</b> pada <b>[${getSystemName(currentTask.system_id)}]</b>`;
+      } else {
+        liveBox.innerHTML = `Developer sedang standby / tidak ada perbaikan aktif.`;
+      }
+
+      // 2. Ambil semua laporan milik sistem ini untuk menghitung nomor antrean
+      const listEl = document.getElementById('sb-queue-list');
+      listEl.innerHTML = '<p style="text-align: center; font-size: 11px; color: #94a3b8; margin-top: 15px;">Memuat antrean...</p>';
       
-      if (!data || data.length === 0) {
-        listEl.innerHTML = '<p style="text-align: center; font-size: 12px; color: #94a3b8; margin-top: 20px;">Belum ada laporan dari sistem ini.</p>';
+      const resHistory = await fetch(`${apiUrl}?system_id=${systemId}`);
+      const { data: historyData } = await resHistory.json();
+      
+      if (!historyData || historyData.length === 0) {
+        listEl.innerHTML = '<p style="text-align: center; font-size: 11px; color: #94a3b8; margin-top: 15px;">Belum ada laporan dari sistem ini.</p>';
         return;
       }
 
-      listEl.innerHTML = data.map(item => {
+      // Render list laporan secara terstruktur dengan info antrean
+      listEl.innerHTML = historyData.map((item, index) => {
         let statusBadge = '';
-        if (item.status === 'pending') statusBadge = '<span style="background: #fff7ed; color: #ea580c; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid #ffedd5;">Menunggu</span>';
-        else if (item.status === 'in_progress') statusBadge = '<span style="background: #eff6ff; color: #2563eb; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid #dbeafe;">Dikerjakan</span>';
-        else statusBadge = '<span style="background: #f0fdf4; color: #16a34a; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid #dcfce7;">Selesai</span>';
+        let queueText = '';
 
-        const date = new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+        if (item.status === 'pending') {
+          queueText = `<span style="background: #f1f5f9; color: #475569; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">Antrean #${index + 1} (Menunggu)</span>`;
+          statusBadge = '<span style="background: #fff7ed; color: #ea580c; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">Pending</span>';
+        } else if (item.status === 'in_progress') {
+          queueText = `<span style="background: #eff6ff; color: #2563eb; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">Sedang Dikerjakan</span>`;
+          statusBadge = '<span style="background: #dbeafe; color: #1d4ed8; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">Proses</span>';
+        } else {
+          queueText = `<span style="background: #f0fdf4; color: #16a34a; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">Selesai</span>`;
+          statusBadge = '<span style="background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">Tuntas</span>';
+        }
 
         return `
-          <div style="background: white; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
-            <div style="font-weight: 700; font-size: 12px; color: #1e293b; margin-bottom: 4px;">${item.title}</div>
-            <div style="font-size: 11px; color: #64748b; margin-bottom: 8px; line-height: 1.3;">${item.description || ''}</div>
-            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; pt-2;">
-              <span style="font-size: 10px; color: #94a3b8;">${date}</span>
+          <div style="background: white; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; display: flex; flex-direction: column; gap: 6px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-weight: 700; font-size: 12px; color: #1e293b; line-height: 1.3;">${item.title}</span>
               ${statusBadge}
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #64748b; border-top: 1px solid #f1f5f9; padding-top: 4px;">
+              ${queueText}
+              <span>${new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
             </div>
           </div>
         `;
@@ -164,16 +194,53 @@
     } catch (e) {}
   }
 
-  toggleBtn.onclick = () => {
-    if (modalContainer.style.display === 'none') {
-      modalContainer.style.display = 'flex';
-      fetchMarquee();
-      fetchHistory();
+  // LOGIKA PEREKAMAN SUARA (VOICE NOTE)
+  let mediaRecorder;
+  let audioChunks = [];
+  let recordedAudioUrl = null;
+  const recordBtn = document.getElementById('sb-record-btn');
+  const recordText = document.getElementById('sb-record-text');
+  const audioPreview = document.getElementById('sb-audio-preview');
+  let isRecording = false;
+
+  recordBtn.onclick = async () => {
+    if (!isRecording) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          audioChunks.push(event.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            recordedAudioUrl = reader.result;
+            audioPreview.src = recordedAudioUrl;
+            audioPreview.style.display = 'block';
+          };
+          reader.readAsDataURL(audioBlob);
+        };
+
+        mediaRecorder.start();
+        isRecording = true;
+        recordBtn.style.backgroundColor = '#dc2626';
+        recordText.innerText = 'Berhenti Merekam...';
+      } catch (err) {
+        alert('Gagal mengakses mikrofon browser.');
+      }
     } else {
-      modalContainer.style.display = 'none';
+      mediaRecorder.stop();
+      isRecording = false;
+      recordBtn.style.backgroundColor = '#2563eb';
+      recordText.innerText = 'Rekam Ulang Suara';
     }
   };
 
+  // KIRIM LAPORAN
   document.getElementById('sb-submit').onclick = async () => {
     const title = document.getElementById('sb-title').value;
     const desc = document.getElementById('sb-desc').value;
@@ -193,12 +260,9 @@
     btn.disabled = true;
 
     let screenshot_url = null;
-
-    // Jika user mengunggah file gambar
     if (fileInput.files && fileInput.files[0]) {
       const file = fileInput.files[0];
       const reader = new FileReader();
-      
       screenshot_url = await new Promise((resolve) => {
         reader.onloadend = () => resolve(reader.result);
         reader.readAsDataURL(file);
@@ -209,7 +273,14 @@
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description: desc, priority, system_id: systemId, screenshot_url })
+        body: JSON.stringify({ 
+          title, 
+          description: desc, 
+          priority, 
+          system_id: systemId, 
+          screenshot_url,
+          voice_url: recordedAudioUrl 
+        })
       });
 
       if (response.ok) {
@@ -219,19 +290,21 @@
         document.getElementById('sb-title').value = '';
         document.getElementById('sb-desc').value = '';
         fileInput.value = '';
+        audioPreview.style.display = 'none';
+        recordedAudioUrl = null;
         
         setTimeout(() => {
           statusEl.style.display = 'none';
           btn.innerText = 'Kirim Laporan';
           btn.disabled = false;
-          switchTab(false); 
-          fetchHistory();
+          switchTab(false); // Pindah ke tab status otomatis
+          fetchDashboardData();
         }, 1500);
       }
     } catch (error) {
       statusEl.style.display = 'block';
       statusEl.style.color = '#ef4444';
-      statusEl.innerText = 'Gagal mengirim. Coba lagi.';
+      statusEl.innerText = 'Gagal mengirim.';
       btn.innerText = 'Kirim Laporan';
       btn.disabled = false;
     }
