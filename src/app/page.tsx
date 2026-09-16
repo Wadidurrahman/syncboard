@@ -17,6 +17,9 @@ export default function Dashboard() {
 
   const { data, loading, updateStatus } = useTickets()
   const [selectedTicket, setSelectedTicket] = useState<any>(null)
+  
+  // STATE BARU: Untuk mengatur tab Aktif / Selesai
+  const [activeTab, setActiveTab] = useState<'active' | 'done'>('active')
 
   useEffect(() => {
     if (sessionStorage.getItem('syncboard_admin_auth') === 'true') {
@@ -70,9 +73,12 @@ export default function Dashboard() {
   const pendingTickets = data?.filter(t => t.status === 'pending').length || 0
   const doneTickets = data?.filter(t => t.status === 'done').length || 0
 
+  // FILTER DATA BERDASARKAN TAB YANG DIPILIH
+  const displayedData = data?.filter(t => activeTab === 'active' ? t.status !== 'done' : t.status === 'done') || []
+
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
-      <header className="bg-white border-b border-slate-300 px-6 py-4 flex justify-between items-center">
+    <div className="min-h-screen bg-slate-50 font-sans relative">
+      <header className="bg-white border-b border-slate-300 px-6 py-4 flex justify-between items-center relative z-10">
         <div className="flex items-center gap-3">
           <div className="bg-blue-600 text-white px-2 py-1 rounded font-black text-sm">SB</div>
           <h1 className="text-lg font-bold text-slate-800">SYNCBOARD Only Developer</h1>
@@ -80,7 +86,7 @@ export default function Dashboard() {
         <button onClick={handleLogout} className="text-sm font-semibold text-red-500 hover:text-red-700">Logout</button>
       </header>
 
-      <main className="p-6 max-w-7xl mx-auto space-y-8">
+      <main className="p-6 max-w-7xl mx-auto space-y-8 relative z-20">
         
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div className="bg-white border border-slate-400 rounded-lg p-6">
@@ -98,10 +104,23 @@ export default function Dashboard() {
         </div>
 
         <div>
-          <h3 className="text-lg font-bold text-slate-800 mb-4">Daftar Antrean Utama</h3>
+          {/* TAB NAVIGASI */}
+          <div className="flex gap-6 border-b border-slate-300 mb-6">
+            <button 
+              onClick={() => setActiveTab('active')} 
+              className={`pb-3 text-sm font-bold transition-colors ${activeTab === 'active' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>
+              Antrean Aktif
+            </button>
+            <button 
+              onClick={() => setActiveTab('done')} 
+              className={`pb-3 text-sm font-bold transition-colors ${activeTab === 'done' ? 'text-green-600 border-b-2 border-green-600' : 'text-slate-500 hover:text-slate-700'}`}>
+              Riwayat Selesai
+            </button>
+          </div>
+
           <div className="bg-white rounded-lg border border-slate-400 overflow-hidden">
             <QueueTable 
-              data={data} 
+              data={displayedData} // <--- Hanya mengirim data yang sudah difilter
               loading={loading} 
               onUpdateStatus={updateStatus}
               onViewDetail={(ticket) => setSelectedTicket(ticket)} 
@@ -110,7 +129,7 @@ export default function Dashboard() {
         </div>
 
         {selectedTicket && (
-          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
             <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-300 shadow-2xl">
               <div className="sticky top-0 bg-white border-b border-slate-300 p-4 flex justify-between items-center z-10">
                 <h3 className="font-bold text-lg text-slate-800">Detail Laporan</h3>

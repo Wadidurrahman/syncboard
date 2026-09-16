@@ -40,6 +40,7 @@ export async function GET(request: Request) {
         .select('*')
         .eq('system_id', systemId)
         .order('created_at', { ascending: false })
+        .limit(15) // <--- PENGAMAN SUPABASE: Hanya tarik 15 data riwayat terbaru klien
       if (error) throw error
       return NextResponse.json({ data }, { headers: corsHeaders() })
     }

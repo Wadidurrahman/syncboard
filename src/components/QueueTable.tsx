@@ -4,6 +4,7 @@ import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
+  getPaginationRowModel, // <--- TAMBAHAN UNTUK PAGINATION
   useReactTable,
 } from '@tanstack/react-table'
 
@@ -105,12 +106,16 @@ export default function QueueTable({ data, loading, onUpdateStatus, onViewDetail
     data: data ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(), // <--- AKTIFKAN PAGINATION
+    initialState: {
+      pagination: { pageSize: 6 }, // <--- TAMPILKAN 6 BARIS PER HALAMAN AGAR RAPI
+    },
   })
 
   if (loading) return <div className="p-12 text-center text-slate-500 text-sm font-semibold">MENGAMBIL DATA...</div>
 
   return (
-    <div className="overflow-x-auto w-full">
+    <div className="overflow-x-auto w-full flex flex-col">
       <table className="w-full text-left border-collapse whitespace-nowrap">
         <thead>
           {table.getHeaderGroups().map(headerGroup => (
@@ -125,7 +130,7 @@ export default function QueueTable({ data, loading, onUpdateStatus, onViewDetail
         </thead>
         <tbody className="bg-white">
           {table.getRowModel()?.rows?.map(row => (
-            <tr key={row.id} className="hover:bg-slate-50 transition-colors border-b border-slate-300 last:border-0">
+            <tr key={row.id} className="hover:bg-slate-50 transition-colors border-b border-slate-300">
               {row.getVisibleCells().map(cell => (
                 <td key={cell.id} className="px-5 py-4">
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -135,6 +140,29 @@ export default function QueueTable({ data, loading, onUpdateStatus, onViewDetail
           ))}
         </tbody>
       </table>
+
+      {/* NAVIGASI PAGINATION */}
+      {table.getPageCount() > 1 && (
+        <div className="flex items-center justify-between px-5 py-4 bg-slate-50 border-t border-slate-300">
+          <span className="text-xs text-slate-500 font-semibold">
+            Halaman {table.getState().pagination.pageIndex + 1} dari {table.getPageCount()}
+          </span>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => table.previousPage()} 
+              disabled={!table.getCanPreviousPage()} 
+              className="px-3 py-1.5 bg-white border border-slate-300 rounded text-xs font-bold text-slate-600 disabled:opacity-40 transition-opacity">
+              Sebelumnya
+            </button>
+            <button 
+              onClick={() => table.nextPage()} 
+              disabled={!table.getCanNextPage()} 
+              className="px-3 py-1.5 bg-white border border-slate-300 rounded text-xs font-bold text-slate-600 disabled:opacity-40 transition-opacity">
+              Selanjutnya
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
