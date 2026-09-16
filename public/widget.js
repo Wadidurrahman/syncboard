@@ -1,286 +1,219 @@
 (function() {
-  const scriptTag = document.currentScript;
-  const systemId = scriptTag.getAttribute('data-system-id') || '';
+  const scriptTag = document.currentScript || document.querySelector('script[src*="widget.js"]');
+  const systemId = scriptTag?.getAttribute('data-system-id') || 'unknown';
   
- const apiUrl = 'https://syncboard-topaz.vercel.app/api/tickets';
-const statusUrl = 'https://syncboard-topaz.vercel.app/api/tickets/status';
+  // URL UTAMA SYNCBOARD ANDA
+  const baseUrl = 'https://syncboard-topaz.vercel.app';
+  const apiUrl = `${baseUrl}/api/tickets`;
 
-  const container = document.createElement('div');
-  container.innerHTML = `
-    <style>
-      @keyframes sbPulse {
-        0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
-        70% { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
-      }
-      @keyframes sbFloat {
-        0% { transform: translateY(0px); }
-        50% { transform: translateY(-4px); }
-        100% { transform: translateY(0px); }
-      }
+  // KAMUS SISTEM (Agar Marquee bisa membaca nama sistem)
+  function getSystemName(id) {
+    if (id === '22dd4848-57d6-4ae4-8369-ab8f55315039') return 'INOVAZI BPS';
+    if (id === 'a7eba848-0529-4bc2-8bf1-9112df1c13e5') return 'ANTREAN BPS';
+    return 'Sistem Umum';
+  }
 
-      .sb-btn { position: fixed; bottom: 24px; right: 24px; background: #2563eb; color: white; border: none; border-radius: 50%; width: 48px; height: 48px; cursor: pointer; font-size: 22px; font-weight: 600; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; animation: sbPulse 2.5s infinite; font-family: system-ui, -apple-system, sans-serif; box-shadow: 0 4px 10px rgba(37,99,235,0.3); }
-      .sb-btn:hover { background: #1d4ed8; transform: scale(1.05); }
+  // 1. BUAT ELEMEN TOMBOL TOGGLE
+  const toggleBtn = document.createElement('button');
+  toggleBtn.id = 'sb-toggle';
+  toggleBtn.innerHTML = '?';
+  Object.assign(toggleBtn.style, {
+    position: 'fixed', bottom: '20px', right: '20px', width: '50px', height: '50px',
+    borderRadius: '50%', backgroundColor: '#2563eb', color: 'white',
+    border: 'none', fontSize: '24px', fontWeight: 'bold', cursor: 'pointer',
+    boxShadow: '0 4px 12px rgba(37,99,235,0.4)', zIndex: '999999', transition: 'all 0.3s ease'
+  });
+
+  // 2. BUAT KONTINER MODAL
+  const modalContainer = document.createElement('div');
+  Object.assign(modalContainer.style, {
+    position: 'fixed', bottom: '80px', right: '20px', width: '340px',
+    backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+    zIndex: '999999', display: 'none', flexDirection: 'column', overflow: 'hidden',
+    fontFamily: 'system-ui, -apple-system, sans-serif', border: '1px solid #e2e8f0'
+  });
+
+  // 3. STRUKTUR HTML MODAL (Marquee + Tabs + Form + History)
+  modalContainer.innerHTML = `
+    <!-- Marquee Info -->
+    <div style="background-color: #1e293b; color: #f8fafc; padding: 6px 10px; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+      <span style="color: #60a5fa; flex-shrink: 0;">⚡ LIVE:</span>
+      <marquee id="sb-marquee-text" scrollamount="4" style="flex-1;">Memuat aktivitas developer...</marquee>
+    </div>
+
+    <!-- Header & Tabs -->
+    <div style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex;">
+      <button id="sb-tab-form" style="flex: 1; padding: 12px 0; border: none; background: white; color: #2563eb; font-weight: bold; font-size: 13px; border-bottom: 2px solid #2563eb; cursor: pointer;">Kirim Laporan</button>
+      <button id="sb-tab-history" style="flex: 1; padding: 12px 0; border: none; background: transparent; color: #64748b; font-weight: bold; font-size: 13px; border-bottom: 2px solid transparent; cursor: pointer;">Riwayat (${getSystemName(systemId)})</button>
+    </div>
+
+    <!-- Area Konten -->
+    <div style="position: relative; height: 380px; overflow: hidden;">
       
-      .sb-tooltip { position: fixed; bottom: 84px; right: 24px; background: white; padding: 10px 14px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); font-family: system-ui, -apple-system, sans-serif; font-size: 12px; color: #475569; font-weight: 500; z-index: 9998; animation: sbFloat 3.5s ease-in-out infinite; border: 1px solid #e2e8f0; pointer-events: none; width: 190px; line-height: 1.4; text-align: center; }
-      .sb-tooltip::after { content: ''; position: absolute; bottom: -5px; right: 19px; width: 10px; height: 10px; background: white; transform: rotate(45deg); border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
-      
-      .sb-modal { display: none; position: fixed; bottom: 84px; right: 24px; width: 300px; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); z-index: 10000; border: 1px solid #e2e8f0; font-family: system-ui, -apple-system, sans-serif; overflow: hidden; }
-      .sb-header { background: #f8fafc; padding: 14px 16px; font-weight: 600; font-size: 14px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; color: #0f172a; }
-      .sb-close { cursor: pointer; color: #94a3b8; font-size: 18px; line-height: 1; border: none; background: none; transition: color 0.2s; }
-      .sb-close:hover { color: #475569; }
-      
-      .sb-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; max-height: 75vh; overflow-y: auto; }
-      
-      .sb-input { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; box-sizing: border-box; outline: none; transition: all 0.2s; color: #334155; }
-      .sb-input:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
-      
-      .sb-label { font-size: 12px; color: #64748b; font-weight: 500; margin-bottom: -8px; }
-      
-      .sb-submit { background: #2563eb; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; width: 100%; margin-top: 4px; transition: background 0.2s; }
-      .sb-submit:hover { background: #1d4ed8; }
-      .sb-submit:disabled { background: #94a3b8; cursor: not-allowed; }
-      
-      .sb-recorder-area { background: #f8fafc; border: 1px dashed #cbd5e1; padding: 12px; border-radius: 6px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
-      .sb-record-btn { background: #3b82f6; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s; width: 100%; justify-content: center; }
-      .sb-record-btn.recording { background: #ef4444; animation: sbPulse 1.5s infinite; }
-      .sb-record-btn:hover:not(.recording) { background: #2563eb; }
-      .sb-audio-preview { width: 100%; height: 32px; display: none; }
-      .sb-discard-btn { font-size: 11px; color: #ef4444; background: none; border: none; cursor: pointer; display: none; font-weight: 500; }
-      .sb-discard-btn:hover { text-decoration: underline; }
-      
-      .sb-status-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; text-align: center; }
-      .sb-badge { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 11px; font-weight: bold; text-transform: uppercase; margin: 12px 0; letter-spacing: 0.5px; }
-      .sb-badge.pending { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
-      .sb-badge.in_progress { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
-      .sb-badge.done { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
-      
-      .sb-new-btn { background: white; color: #475569; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; width: 100%; margin-top: 12px; transition: background 0.2s; }
-      .sb-new-btn:hover { background: #f8fafc; }
-    </style>
-    
-    <div id="sb-tooltip" class="sb-tooltip">Silahkan buat laporan jika ada bug atau update fitur</div>
-    <button id="sb-toggle" class="sb-btn">?</button>
-    
-    <div id="sb-modal" class="sb-modal">
-      <div class="sb-header">
-        <span>Layanan Developer</span>
-        <button id="sb-close" class="sb-close">✖</button>
-      </div>
-      
-      <form id="sb-form" class="sb-body">
-        <input type="text" name="title" placeholder="Judul Kendala/Fitur" class="sb-input" required />
-        <textarea name="description" placeholder="Jelaskan detailnya di sini..." class="sb-input" rows="3"></textarea>
+      <!-- TAB 1: FORM -->
+      <div id="sb-content-form" style="position: absolute; inset: 0; padding: 16px; overflow-y: auto; display: block;">
+        <input type="text" id="sb-title" placeholder="Judul Kendala (Misal: Tombol cetak error)" style="width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 13px;">
+        <textarea id="sb-desc" placeholder="Jelaskan detail kendala..." style="width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #cbd5e1; border-radius: 6px; height: 80px; resize: none; box-sizing: border-box; font-size: 13px;"></textarea>
         
-        <label class="sb-label">Prioritas</label>
-        <select name="priority" class="sb-input">
-          <option value="standard">Standard (Biasa)</option>
-          <option value="urgent">Urgent (Darurat! Segera)</option>
-          <option value="slow">Slow (Fitur Baru/Nanti)</option>
-        </select>
-        
-        <label class="sb-label">Screenshot (Opsional)</label>
-        <input type="file" name="screenshot" accept="image/*" class="sb-input" />
-
-        <label class="sb-label">Voice Note (Opsional)</label>
-        <div class="sb-recorder-area">
-          <button type="button" id="sb-record-btn" class="sb-record-btn">
-            <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5z"/><path d="M10 8a2 2 0 1 1-4 0V3a2 2 0 1 1 4 0v5zM8 0a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V3a3 3 0 0 0-3-3z"/></svg>
-            <span id="sb-record-text">Mulai Rekam Suara</span>
-          </button>
-          <audio id="sb-audio-preview" class="sb-audio-preview" controls></audio>
-          <button type="button" id="sb-discard-btn" class="sb-discard-btn">Hapus Rekaman</button>
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+          <select id="sb-priority" style="flex: 1; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px;">
+            <option value="standard">Standard</option>
+            <option value="urgent">Urgent (Darurat)</option>
+          </select>
         </div>
-        
-        <button type="submit" id="sb-submit" class="sb-submit">Kirim Laporan</button>
-      </form>
 
-      <div id="sb-tracker" class="sb-body" style="display: none;">
-        <div class="sb-status-card">
-          <div style="font-size: 12px; color: #64748b; margin-bottom: 8px;">Status Laporan Saat Ini</div>
-          <strong id="sb-track-title" style="font-size: 14px; color: #0f172a; display: block;">Memuat...</strong>
-          <span id="sb-track-badge" class="sb-badge pending">PENDING</span>
-          <div id="sb-track-desc" style="font-size: 12px; color: #475569; margin-top: 5px; line-height: 1.4;"></div>
-        </div>
-        <button id="sb-btn-new" class="sb-new-btn">Buat Laporan Baru</button>
+        <button id="sb-submit" style="width: 100%; padding: 12px; background-color: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;">Kirim Laporan</button>
+        <p id="sb-status" style="font-size: 12px; text-align: center; margin-top: 10px; font-weight: bold; display: none;"></p>
       </div>
+
+      <!-- TAB 2: HISTORY -->
+      <div id="sb-content-history" style="position: absolute; inset: 0; padding: 16px; overflow-y: auto; display: none; background: #f8fafc;">
+        <div id="sb-history-list" style="display: flex; flex-direction: column; gap: 10px;">
+          <p style="text-align: center; font-size: 12px; color: #94a3b8; margin-top: 20px;">Memuat riwayat...</p>
+        </div>
+      </div>
+
     </div>
   `;
-  document.body.appendChild(container);
 
-  const modal = document.getElementById('sb-modal');
-  const toggle = document.getElementById('sb-toggle');
-  const tooltip = document.getElementById('sb-tooltip');
-  const form = document.getElementById('sb-form');
-  const tracker = document.getElementById('sb-tracker');
-  
-  const recordBtn = document.getElementById('sb-record-btn');
-  const recordText = document.getElementById('sb-record-text');
-  const audioPreview = document.getElementById('sb-audio-preview');
-  const discardBtn = document.getElementById('sb-discard-btn');
+  document.body.appendChild(toggleBtn);
+  document.body.appendChild(modalContainer);
 
-  let mediaRecorder;
-  let audioChunks = [];
-  let audioBlob = null;
-  let isRecording = false;
-  let recordInterval;
-  let recordSeconds = 0;
+  // LOGIKA TAB SWAP
+  const tabForm = document.getElementById('sb-tab-form');
+  const tabHistory = document.getElementById('sb-tab-history');
+  const contentForm = document.getElementById('sb-content-form');
+  const contentHistory = document.getElementById('sb-content-history');
 
-  recordBtn.onclick = async () => {
-    if (!isRecording) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
-        audioChunks = [];
-        
-        mediaRecorder.ondataavailable = e => {
-          if (e.data.size > 0) audioChunks.push(e.data);
-        };
-        
-        mediaRecorder.onstop = () => {
-          audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-          const audioUrl = URL.createObjectURL(audioBlob);
-          audioPreview.src = audioUrl;
-          
-          recordBtn.style.display = 'none';
-          audioPreview.style.display = 'block';
-          discardBtn.style.display = 'block';
-          
-          stream.getTracks().forEach(track => track.stop());
-        };
-        
-        mediaRecorder.start();
-        isRecording = true;
-        recordBtn.classList.add('recording');
-        
-        recordSeconds = 0;
-        recordText.innerText = 'Merekam... 0s';
-        recordInterval = setInterval(() => {
-          recordSeconds++;
-          recordText.innerText = `Merekam... ${recordSeconds}s (Klik untuk Stop)`;
-        }, 1000);
-        
-      } catch (err) {
-        alert('Izin mikrofon ditolak atau perangkat tidak mendukung.');
-      }
+  function switchTab(toForm) {
+    if (toForm) {
+      tabForm.style.color = '#2563eb'; tabForm.style.borderBottomColor = '#2563eb'; tabForm.style.background = 'white';
+      tabHistory.style.color = '#64748b'; tabHistory.style.borderBottomColor = 'transparent'; tabHistory.style.background = 'transparent';
+      contentForm.style.display = 'block'; contentHistory.style.display = 'none';
     } else {
-      mediaRecorder.stop();
-      isRecording = false;
-      recordBtn.classList.remove('recording');
-      clearInterval(recordInterval);
-    }
-  };
-
-  const resetAudioUI = () => {
-    audioBlob = null;
-    audioPreview.src = '';
-    audioPreview.style.display = 'none';
-    discardBtn.style.display = 'none';
-    recordBtn.style.display = 'flex';
-    recordText.innerText = 'Mulai Rekam Suara';
-    recordBtn.classList.remove('recording');
-    isRecording = false;
-    clearInterval(recordInterval);
-  };
-
-  discardBtn.onclick = resetAudioUI;
-
-  async function checkStatus(ticketId) {
-    try {
-      const res = await fetch(`${statusUrl}?id=${ticketId}`);
-      const data = await res.json();
-      
-      if (data.success) {
-        document.getElementById('sb-track-title').innerText = data.data.title;
-        const badge = document.getElementById('sb-track-badge');
-        badge.className = `sb-badge ${data.data.status}`;
-        badge.innerText = data.data.status.replace('_', ' ');
-        
-        const desc = document.getElementById('sb-track-desc');
-        if (data.data.status === 'pending') {
-          desc.innerText = 'Laporan Anda sudah masuk dan menunggu respon dari Developer.';
-        } else if (data.data.status === 'in_progress') {
-          desc.innerText = 'Developer sedang mengerjakan laporan/fitur ini.';
-        } else if (data.data.status === 'done') {
-          desc.innerText = 'Pembaruan telah diselesaikan oleh Developer!';
-        }
-
-        form.style.display = 'none';
-        tracker.style.display = 'flex';
-      } else {
-        localStorage.removeItem('sb_ticket_id');
-        form.style.display = 'flex';
-        tracker.style.display = 'none';
-      }
-    } catch (err) {
-      console.error(err);
+      tabHistory.style.color = '#2563eb'; tabHistory.style.borderBottomColor = '#2563eb'; tabHistory.style.background = 'white';
+      tabForm.style.color = '#64748b'; tabForm.style.borderBottomColor = 'transparent'; tabForm.style.background = 'transparent';
+      contentForm.style.display = 'none'; contentHistory.style.display = 'block';
     }
   }
 
-  toggle.onclick = () => {
-    const isHidden = modal.style.display === 'none' || modal.style.display === '';
-    modal.style.display = isHidden ? 'block' : 'none';
-    
-    if (isHidden) {
-      tooltip.style.display = 'none';
-      toggle.style.animation = 'none';
+  tabForm.onclick = () => switchTab(true);
+  tabHistory.onclick = () => switchTab(false);
+
+  // FUNGSI: Ambil Data Marquee (Realtime Pengerjaan Developer)
+  async function fetchMarquee() {
+    try {
+      const res = await fetch(`${apiUrl}?marquee=true`);
+      const { data } = await res.json();
+      const marqueeEl = document.getElementById('sb-marquee-text');
       
-      const activeTicket = localStorage.getItem('sb_ticket_id');
-      if (activeTicket) {
-        form.style.display = 'none';
-        tracker.style.display = 'flex';
-        checkStatus(activeTicket);
+      if (data && data.length > 0) {
+        const textArr = data.map(t => `Sedang memperbaiki [${t.title}] di [${getSystemName(t.system_id)}]`);
+        marqueeEl.innerText = textArr.join('  •  ');
       } else {
-        form.style.display = 'flex';
-        tracker.style.display = 'none';
+        marqueeEl.innerText = 'Semua sistem aman. Tidak ada perbaikan aktif.';
       }
+    } catch (e) { console.error(e); }
+  }
+
+  // FUNGSI: Ambil Data Riwayat Klien Ini
+  async function fetchHistory() {
+    try {
+      const listEl = document.getElementById('sb-history-list');
+      listEl.innerHTML = '<p style="text-align: center; font-size: 12px; color: #94a3b8; margin-top: 20px;">Memuat riwayat...</p>';
+      
+      const res = await fetch(`${apiUrl}?system_id=${systemId}`);
+      const { data } = await res.json();
+      
+      if (!data || data.length === 0) {
+        listEl.innerHTML = '<p style="text-align: center; font-size: 12px; color: #94a3b8; margin-top: 20px;">Belum ada laporan dari sistem ini.</p>';
+        return;
+      }
+
+      listEl.innerHTML = data.map(item => {
+        let statusBadge = '';
+        if (item.status === 'pending') statusBadge = '<span style="background: #fff7ed; color: #ea580c; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid #ffedd5;">Menunggu</span>';
+        else if (item.status === 'in_progress') statusBadge = '<span style="background: #eff6ff; color: #2563eb; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid #dbeafe;">Dikerjakan Developer</span>';
+        else statusBadge = '<span style="background: #f0fdf4; color: #16a34a; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid #dcfce7;">Selesai Tuntas</span>';
+
+        const date = new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+
+        return `
+          <div style="background: white; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+              <h4 style="margin: 0; font-size: 12px; color: #1e293b; line-height: 1.4;">${item.title}</h4>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 10px; color: #94a3b8;">${date}</span>
+              ${statusBadge}
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch (e) { console.error(e); }
+  }
+
+  // LOGIKA BUKA/TUTUP MODAL (Auto Refresh saat dibuka!)
+  toggleBtn.onclick = () => {
+    if (modalContainer.style.display === 'none') {
+      modalContainer.style.display = 'flex';
+      toggleBtn.innerHTML = '×';
+      toggleBtn.style.backgroundColor = '#ef4444';
+      // Minta data terbaru dari server saat dibuka! (Memperbaiki bug status pending)
+      fetchMarquee();
+      fetchHistory();
+    } else {
+      modalContainer.style.display = 'none';
+      toggleBtn.innerHTML = '?';
+      toggleBtn.style.backgroundColor = '#2563eb';
     }
   };
 
-  document.getElementById('sb-close').onclick = () => {
-    modal.style.display = 'none';
-  };
+  // LOGIKA KIRIM LAPORAN
+  document.getElementById('sb-submit').onclick = async () => {
+    const title = document.getElementById('sb-title').value;
+    const desc = document.getElementById('sb-desc').value;
+    const priority = document.getElementById('sb-priority').value;
+    const statusEl = document.getElementById('sb-status');
 
-  document.getElementById('sb-btn-new').onclick = () => {
-    localStorage.removeItem('sb_ticket_id');
-    form.reset();
-    resetAudioUI();
-    tracker.style.display = 'none';
-    form.style.display = 'flex';
-  };
+    if (!title || !desc) {
+      statusEl.style.display = 'block';
+      statusEl.style.color = '#ef4444';
+      statusEl.innerText = 'Judul dan Deskripsi wajib diisi!';
+      return;
+    }
 
-  form.onsubmit = async (e) => {
-    e.preventDefault();
     const btn = document.getElementById('sb-submit');
     btn.innerText = 'Mengirim...';
     btn.disabled = true;
 
-    const formData = new FormData(e.target);
-    formData.append('system_id', systemId);
-    
-    if (audioBlob) {
-      const audioFile = new File([audioBlob], `voice-${Date.now()}.webm`, { type: 'audio/webm' });
-      formData.append('voice', audioFile);
-    }
-
     try {
-      const res = await fetch(apiUrl, { 
-        method: 'POST', 
-        body: formData 
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, description: desc, priority, system_id: systemId })
       });
-      const data = await res.json();
-      
-      if (data.success && data.ticket_id) {
-        localStorage.setItem('sb_ticket_id', data.ticket_id);
-        form.reset();
-        resetAudioUI();
-        checkStatus(data.ticket_id);
-      } else {
-        alert('Gagal mengirim laporan: ' + data.error);
+
+      if (response.ok) {
+        statusEl.style.display = 'block';
+        statusEl.style.color = '#10b981';
+        statusEl.innerText = 'Laporan berhasil dikirim!';
+        document.getElementById('sb-title').value = '';
+        document.getElementById('sb-desc').value = '';
+        
+        // Pindah ke tab riwayat otomatis setelah sukses
+        setTimeout(() => {
+          statusEl.style.display = 'none';
+          btn.innerText = 'Kirim Laporan';
+          btn.disabled = false;
+          switchTab(false); 
+          fetchHistory(); // Refresh riwayat agar data baru muncul
+        }, 1500);
       }
-    } catch (err) {
-      alert('Terjadi kesalahan jaringan.');
-    } finally {
+    } catch (error) {
+      statusEl.style.display = 'block';
+      statusEl.style.color = '#ef4444';
+      statusEl.innerText = 'Gagal mengirim. Coba lagi.';
       btn.innerText = 'Kirim Laporan';
       btn.disabled = false;
     }

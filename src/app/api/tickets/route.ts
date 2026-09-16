@@ -1,85 +1,70 @@
+import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
-import { supabase } from './../../lib/supabase'
 
-export async function OPTIONS() {
-  return NextResponse.json({}, {
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
-  })
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabase = createClient(supabaseUrl, supabaseKey)
+
+// FUNGSI GET: Untuk mengambil Riwayat & Marquee di Widget
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const systemId = searchParams.get('system_id')
+  const marquee = searchParams.get('marquee')
+
+  try {
+    // 1. Jika Widget meminta data Marquee (Bug yang sedang dikerjakan)
+    if (marquee === 'true') {
+      const { data, error } = await supabase
+        .from('tickets')
+        .select('title, status, system_id')
+        .eq('status', 'in_progress')
+        .order('created_at', { ascending: false })
+        .limit(3)
+      if (error) throw error
+      return NextResponse.json({ data })
+    }
+
+    // 2. Jika Widget meminta Riwayat berdasarkan Sistem Klien
+    if (systemId) {
+      const { data, error } = await supabase
+        .from('tickets')
+        .select('*')
+        .eq('system_id', systemId)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return NextResponse.json({ data })
+    }
+
+    // 3. Default Get All (Untuk Admin)
+    const { data } = await supabase.from('tickets').select('*').order('created_at', { ascending: false })
+    return NextResponse.json({ data })
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
 }
 
+// FUNGSI POST: Untuk mengirim laporan baru dari Widget
 export async function POST(request: Request) {
   try {
-    const formData = await request.formData()
-    
-    const system_id = formData.get('system_id') as string
-    const title = formData.get('title') as string
-    const description = formData.get('description') as string
-    const priority = formData.get('priority') as string || 'standard'
-    
-    const screenshot = formData.get('screenshot') as File | null
-    const voice = formData.get('voice') as File | null
-
-    let screenshot_url = null
-    let voice_url = null
-
-    if (screenshot && screenshot.size > 0) {
-      const ext = screenshot.name.split('.').pop()
-      const fileName = `screenshot-${Date.now()}.${ext}`
-      const { error } = await supabase.storage
-        .from('attachments')
-        .upload(fileName, screenshot)
-        
-      if (!error) {
-        screenshot_url = supabase.storage.from('attachments').getPublicUrl(fileName).data.publicUrl
-      }
-    }
-
-    if (voice && voice.size > 0) {
-      const ext = voice.name.split('.').pop()
-      const fileName = `voice-${Date.now()}.${ext}`
-      const { error } = await supabase.storage
-        .from('attachments')
-        .upload(fileName, voice)
-        
-      if (!error) {
-        voice_url = supabase.storage.from('attachments').getPublicUrl(fileName).data.publicUrl
-      }
-    }
-
-    const { data: ticket, error: dbError } = await supabase
+    const body = await request.json()
+    const { data, error } = await supabase
       .from('tickets')
       .insert([
         {
-          system_id,
-          title,
-          description,
-          priority,
-          screenshot_url,
-          voice_url,
+          title: body.title,
+          description: body.description,
+          priority: body.priority || 'standard',
+          system_id: body.system_id || 'unknown',
+          voice_url: body.voice_url || null,
+          screenshot_url: body.screenshot_url || null,
           status: 'pending'
         }
       ])
       .select()
 
-    if (dbError) throw dbError
-
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Laporan berhasil dikirim',
-      ticket_id: ticket[0].id
-    }, {
-      status: 200,
-      headers: { 'Access-Control-Allow-Origin': '*' }
-    })
-
+    if (error) throw error
+    return NextResponse.json({ data }, { status: 201 })
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, {
-      status: 500,
-      headers: { 'Access-Control-Allow-Origin': '*' }
-    })
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
