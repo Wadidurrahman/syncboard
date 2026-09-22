@@ -73,7 +73,6 @@ export default function Dashboard() {
   return (
     <main className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 md:space-y-8 relative">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-black text-slate-800">Master Queue</h2>
         <button onClick={handleLogout} className="text-xs font-bold text-red-500 hover:text-red-700">Logout</button>
       </div>
 
