@@ -17,12 +17,11 @@ interface QueueTableProps {
   onViewDetail?: (ticket: any) => void;
 }
 
-// Deteksi Nama Sistem
 const getSystemName = (id: string) => {
   if (id === '22dd4848-57d6-4ae4-8369-ab8f55315039') return 'INOVAZI BPS';
   if (id === 'a7eba848-0529-4bc2-8bf1-9112df1c13e5') return 'ANTREAN BPS';
-  if (id === '00000000-0000-0000-0000-000000000000') return 'UMUM (INTERNAL)';
-  return id ? String(id).substring(0, 8) : 'UMUM';
+  if (!id || id === 'umum') return 'UMUM (INTERNAL)'; 
+  return String(id).substring(0, 8);
 }
 
 export default function QueueTable({ data, loading, onUpdateStatus, onViewDetail }: QueueTableProps) {
@@ -39,8 +38,8 @@ export default function QueueTable({ data, loading, onUpdateStatus, onViewDetail
       header: 'Sistem Klien',
       cell: info => {
         const id = info.getValue();
-        // Jika sistem Umum, ubah warna badgenya menjadi gelap agar makin kontras
-        const isInternal = id === '00000000-0000-0000-0000-000000000000';
+        // Deteksi nilai null atau "umum" sebagai task internal
+        const isInternal = !id || id === 'umum';
         return (
           <span className={`text-xs font-bold px-2 py-1 rounded-md border ${
             isInternal ? 'bg-slate-700 text-white border-slate-800' : 'bg-slate-100 text-slate-600 border-slate-200'
@@ -140,13 +139,13 @@ export default function QueueTable({ data, loading, onUpdateStatus, onViewDetail
           </thead>
           <tbody className="divide-y divide-slate-200">
             {table.getRowModel()?.rows?.map(row => {
-              // LOGIKA BACKGROUND ABU-ABU: Cek apakah ini task Internal/Umum
-              const isInternalTask = row.original.system_id === '00000000-0000-0000-0000-000000000000';
+              // Jika data null atau 'umum', berikan background Abu-abu khusus
+              const id = row.original.system_id;
+              const isInternalTask = !id || id === 'umum';
               
               return (
                 <tr 
                   key={row.id} 
-                  // Jika isInternalTask true, background baris menjadi abu-abu (bg-slate-100)
                   className={`transition-colors ${isInternalTask ? 'bg-slate-100 hover:bg-slate-200/70' : 'bg-white hover:bg-slate-50/50'}`}
                 >
                   {row.getVisibleCells().map(cell => (
