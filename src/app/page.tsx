@@ -8,6 +8,7 @@ import QueueTable from '@/components/QueueTable'
 const getSystemName = (id: string) => {
   if (id === '22dd4848-57d6-4ae4-8369-ab8f55315039') return 'INOVAZI BPS';
   if (id === 'a7eba848-0529-4bc2-8bf1-9112df1c13e5') return 'ANTREAN BPS';
+  if (id === '00000000-0000-0000-0000-000000000000') return 'UMUM'; 
   return id ? String(id).substring(0, 8) : 'UMUM';
 }
 
@@ -23,7 +24,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<'active' | 'done'>('active')
 
   const [manualTitle, setManualTitle] = useState('')
-  const [manualSystem, setManualSystem] = useState('umum')
+  const [manualSystem, setManualSystem] = useState('00000000-0000-0000-0000-000000000000') 
   const [isSubmittingManual, setIsSubmittingManual] = useState(false)
 
   useEffect(() => {
@@ -53,7 +54,9 @@ export default function Dashboard() {
     e.preventDefault()
     if (!manualTitle) return
     setIsSubmittingManual(true)
+    
     try {
+      // Menggunakan relative path yang paling stabil di Next.js App Router
       const res = await fetch('/api/tickets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -61,16 +64,19 @@ export default function Dashboard() {
           title: manualTitle,
           description: 'Pekerjaan internal/manual yang ditambahkan oleh Developer.',
           priority: 'standard',
-          system_id: manualSystem,
+          system_id: manualSystem, // Mengirim UUID kosong yang tidak akan membuat DB Crash
           status: 'in_progress' 
         })
       })
-      if (res.ok) {
-        setManualTitle('')
-        router.refresh() 
-      }
-    } catch (error) {
-      console.error(error)
+      
+      if (!res.ok) throw new Error('Data gagal disimpan ke server')
+      
+      setManualTitle('')
+      window.location.reload() 
+      
+    } catch (error: any) {
+      console.error('Fetch error:', error)
+      alert('Terjadi kesalahan: Pastikan API Route Anda sudah mengizinkan status "in_progress"')
     } finally {
       setIsSubmittingManual(false)
     }
@@ -113,7 +119,7 @@ export default function Dashboard() {
   return (
     <div className="h-screen bg-slate-50 font-sans flex flex-col overflow-hidden text-slate-800">
       
-      {/* HEADER FIXED SIZE */}
+      {/* HEADER */}
       <header className="shrink-0 bg-white border-b border-slate-200 px-6 sm:px-8 py-3.5 flex justify-between items-center shadow-sm z-20">
         <div className="flex items-center gap-3">
           <div className="bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-lg font-black text-xs shadow-md">SB</div>
@@ -122,12 +128,10 @@ export default function Dashboard() {
         <button onClick={handleLogout} className="text-xs font-bold text-slate-500 hover:text-rose-600 transition-colors bg-slate-100 hover:bg-rose-50 px-4 py-2 rounded-lg">Logout</button>
       </header>
 
-      {/* MAIN CONTENT TAKES REMAINING SPACE */}
       <main className="flex-1 w-full px-6 py-6 flex flex-col gap-6 overflow-hidden relative z-10">
         
-        {/* TOP ROW: STATS & BROADCAST SIDE-BY-SIDE ON DESKTOP */}
+        {/* TOP ROW */}
         <div className="shrink-0 flex flex-col xl:flex-row gap-6">
-          
           <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col relative overflow-hidden group">
               <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500"></div>
@@ -168,7 +172,7 @@ export default function Dashboard() {
                     onChange={(e) => setManualSystem(e.target.value)}
                     className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all cursor-pointer"
                   >
-                    <option value="umum">Sistem Umum</option>
+                    <option value="00000000-0000-0000-0000-000000000000">Sistem Umum</option>
                     <option value="22dd4848-57d6-4ae4-8369-ab8f55315039">INOVAZI BPS</option>
                     <option value="a7eba848-0529-4bc2-8bf1-9112df1c13e5">ANTREAN BPS</option>
                   </select>
@@ -183,12 +187,10 @@ export default function Dashboard() {
               </form>
             </div>
           </div>
-
         </div>
 
-        {/* BOTTOM ROW: TABLE WRAPPER TAKES 100% OF REMAINING HEIGHT */}
+        {/* BOTTOM ROW: TABLE */}
         <div className="flex-1 flex flex-col min-h-0 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          
           <div className="shrink-0 flex gap-2 border-b border-slate-200 p-2 bg-slate-50">
             <button 
               onClick={() => setActiveTab('active')} 
@@ -212,7 +214,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* MODAL POP-UP DETAIL */}
+        {/* MODAL DETAIL */}
         {selectedTicket && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200">
@@ -230,26 +232,22 @@ export default function Dashboard() {
                      {new Date(selectedTicket.created_at).toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' })}
                    </span>
                 </div>
-
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Judul Laporan</p>
                   <p className="text-lg font-bold text-slate-800 leading-tight">{selectedTicket.title}</p>
                 </div>
-
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Deskripsi Lengkap</p>
                   <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
                     {selectedTicket.description || 'Tidak ada deskripsi.'}
                   </div>
                 </div>
-
                 {selectedTicket.voice_url && (
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Voice Note</p>
                     <audio controls src={selectedTicket.voice_url} className="w-full h-12 rounded-xl bg-slate-50 border border-slate-200" />
                   </div>
                 )}
-
                 {selectedTicket.screenshot_url && (
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Screenshot</p>

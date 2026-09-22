@@ -20,6 +20,7 @@ interface QueueTableProps {
 const getSystemName = (id: string) => {
   if (id === '22dd4848-57d6-4ae4-8369-ab8f55315039') return 'INOVAZI BPS';
   if (id === 'a7eba848-0529-4bc2-8bf1-9112df1c13e5') return 'ANTREAN BPS';
+  if (id === '00000000-0000-0000-0000-000000000000') return 'UMUM'; // <--- Trik membaca UUID kosong
   return id ? String(id).substring(0, 8) : 'UMUM';
 }
 
