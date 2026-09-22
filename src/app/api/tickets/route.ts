@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 const supabaseUrl = 'https://bdvfhwcmbqkmpgplsxst.supabase.co' 
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJkdmZod2NtYnFrbXBncGxzeHN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNjQ2OTYsImV4cCI6MjEwNDk0MDY5Nn0.ahqlXEsu3rmmX4hoCR56VWIptAC0yIQwooRXFfG-lyQ' 
 const supabase = createClient(supabaseUrl, supabaseKey)
@@ -65,7 +68,6 @@ export async function POST(request: Request) {
           system_id: body.system_id || 'unknown',
           voice_url: body.voice_url || null,
           screenshot_url: body.screenshot_url || null,
-          // MODIFIKASI: Gunakan status dari body jika ada, jika tidak default ke 'pending'
           status: body.status || 'pending' 
         }
       ])
