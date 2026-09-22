@@ -17,10 +17,11 @@ interface QueueTableProps {
   onViewDetail?: (ticket: any) => void;
 }
 
+// Deteksi Nama Sistem
 const getSystemName = (id: string) => {
   if (id === '22dd4848-57d6-4ae4-8369-ab8f55315039') return 'INOVAZI BPS';
   if (id === 'a7eba848-0529-4bc2-8bf1-9112df1c13e5') return 'ANTREAN BPS';
-  if (id === '00000000-0000-0000-0000-000000000000') return 'UMUM'; // <--- Trik membaca UUID kosong
+  if (id === '00000000-0000-0000-0000-000000000000') return 'UMUM (INTERNAL)';
   return id ? String(id).substring(0, 8) : 'UMUM';
 }
 
@@ -36,11 +37,18 @@ export default function QueueTable({ data, loading, onUpdateStatus, onViewDetail
     }),
     columnHelper.accessor('system_id', {
       header: 'Sistem Klien',
-      cell: info => (
-        <span className="text-slate-600 text-xs font-bold bg-slate-100 px-2 py-1 rounded-md border border-slate-200">
-          {getSystemName(info.getValue())}
-        </span>
-      ),
+      cell: info => {
+        const id = info.getValue();
+        // Jika sistem Umum, ubah warna badgenya menjadi gelap agar makin kontras
+        const isInternal = id === '00000000-0000-0000-0000-000000000000';
+        return (
+          <span className={`text-xs font-bold px-2 py-1 rounded-md border ${
+            isInternal ? 'bg-slate-700 text-white border-slate-800' : 'bg-slate-100 text-slate-600 border-slate-200'
+          }`}>
+            {getSystemName(id)}
+          </span>
+        )
+      },
     }),
     columnHelper.accessor('priority', {
       header: 'Prioritas',
@@ -49,7 +57,7 @@ export default function QueueTable({ data, loading, onUpdateStatus, onViewDetail
         const color = 
           priority === 'urgent' ? 'bg-red-50 text-red-600 border-red-200' : 
           priority === 'standard' ? 'bg-yellow-50 text-yellow-600 border-yellow-200' : 
-          'bg-slate-50 text-slate-600 border-slate-200'
+          'bg-slate-200 text-slate-600 border-slate-300'
         return (
           <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase border ${color}`}>
             {priority}
@@ -130,16 +138,25 @@ export default function QueueTable({ data, loading, onUpdateStatus, onViewDetail
               </tr>
             ))}
           </thead>
-          <tbody className="divide-y divide-slate-100">
-            {table.getRowModel()?.rows?.map(row => (
-              <tr key={row.id} className="hover:bg-slate-50/50 transition-colors">
-                {row.getVisibleCells().map(cell => (
-                  <td key={cell.id} className="px-6 py-4">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
+          <tbody className="divide-y divide-slate-200">
+            {table.getRowModel()?.rows?.map(row => {
+              // LOGIKA BACKGROUND ABU-ABU: Cek apakah ini task Internal/Umum
+              const isInternalTask = row.original.system_id === '00000000-0000-0000-0000-000000000000';
+              
+              return (
+                <tr 
+                  key={row.id} 
+                  // Jika isInternalTask true, background baris menjadi abu-abu (bg-slate-100)
+                  className={`transition-colors ${isInternalTask ? 'bg-slate-100 hover:bg-slate-200/70' : 'bg-white hover:bg-slate-50/50'}`}
+                >
+                  {row.getVisibleCells().map(cell => (
+                    <td key={cell.id} className="px-6 py-4">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
